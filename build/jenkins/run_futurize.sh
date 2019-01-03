@@ -182,7 +182,7 @@ process_branch () {
     if [ -n "$SEQUENTIAL" ]; then
         shopt -s globstar
         OUTPUT1=""
-        for i in **/*.py; do
+        for i in $(find .  -name '*\.py' -print); do
             OUTPUT_TMP="PROC: $i"$'\n'"$(futurize $FUTURIZE_STAGE $DIFF_OPTION ${i} 2>&1)"
             OUTPUT1="$OUTPUT1"$'\n'"$OUTPUT_TMP"
             if [ $? -ne 0 ]; then
@@ -195,7 +195,7 @@ process_branch () {
     fi
 
     # get list of python scripts without .py extension
-    scripts=`find . -path .git -prune -o -exec file {} \; -a -type f | grep -i python | grep -vi '\.py' | cut -d: -f1 | grep -v "\.html$"`
+    scripts=$(find . -path .git -prune -o -exec file {} \; -a -type f | grep -i python | grep -vi '\.py' | cut -d: -f1 | grep -v "\.html$")
     if [ -n "$SEQUENTIAL" ]; then
         OUTPUT2=""
         for i in ${scripts}; do
