@@ -179,10 +179,11 @@ process_branch () {
     echo "Now running test"
     echo ""
 
+    pyfiles=$(find .  -name '*\.py' -print)
     if [ -n "$SEQUENTIAL" ]; then
-        shopt -s globstar
+        #shopt -s globstar
         OUTPUT1=""
-        for i in $(find .  -name '*\.py' -print); do
+        for i in $pyfiles; do
             OUTPUT_TMP="PROC: $i"$'\n'"$(futurize $FUTURIZE_STAGE $DIFF_OPTION ${i} 2>&1)"
             OUTPUT1="$OUTPUT1"$'\n'"$OUTPUT_TMP"
             if [ $? -ne 0 ]; then
@@ -190,7 +191,7 @@ process_branch () {
             fi
         done
     else
-        OUTPUT1="$(futurize $FUTURIZE_STAGE $DIFF_OPTION . 2>&1)"
+        OUTPUT1="$(futurize $FUTURIZE_STAGE $DIFF_OPTION ${pyfiles} 2>&1)"
         futurize_ret1=$?
     fi
 
