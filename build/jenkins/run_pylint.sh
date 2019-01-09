@@ -150,8 +150,9 @@ process_branch() {
     files_checked=`echo $scripts`
 
     #now do all the .py files
-    shopt -s globstar
-    for file in **/*.py
+    #shopt -s globstar
+    py_files=$(find . -readable -type f -name '*\.py')
+    for file in $py_files
     do
       files_checked="$files_checked $file"
       PYLINT_SKIP="False"
