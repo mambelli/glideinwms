@@ -79,7 +79,7 @@ SOURCES="${SOURCES},${GLIDEINWMS_SRC}/tools,${GLIDEINWMS_SRC}/tools/lib"
 #files="test_frontend.py test_frontend_element.py"
 
 if [ -n "$LIST_FILES" ]; then
-    files_list="$(find . -name  'test_*.py' -print)"
+    files_list="$(find . -readable -name  'test_*.py' -print)"
 else
     files_list="$*"
 fi

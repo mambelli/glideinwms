@@ -179,7 +179,7 @@ process_branch () {
     echo "Now running test"
     echo ""
 
-    pyfiles=$(find .  -name '*\.py' -print)
+    pyfiles=$(find .  -name '*\.py' -readable -print)
     if [ -n "$SEQUENTIAL" ]; then
         #shopt -s globstar
         OUTPUT1=""
