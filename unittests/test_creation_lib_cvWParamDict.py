@@ -68,41 +68,56 @@ class TestFrontendMainDicts(unittest.TestCase):
     def test_populate_common_attrs(self):
         populate_common_attrs(self.fed)
 
-    def test_find_parend_dir(self):
+    def test_find_parent_dir(self):
+        populate_common_attrs(self.fed)
         pd = self.fed.find_parent_dir('fixtures/frontend', 'index.html')
-        self.assertEqual(pd, 'fixtures/frontend/web-base/frontend')
+        self.assertEqual(pd, 'fixtures/frontend/web-area/monitor')
 
     def test_save_monitor(self):
         self.fed.save_monitor()
 
     @unittest.skip('hmm')
     def test_apply_group_glexec_policy(self):
+        self.fed.populate(self.fe_params)
         apply_group_glexec_policy(
-            self.fed.dicts['group_descript'],
+            self.fed,
             self.sub_params,
-            self.params)
+            self.fe_params)
 
     @unittest.skip('hmm')
     def test_apply_group_singularity_policy(self):
+        self.fed.populate(self.fe_params)
         apply_group_singularity_policy(
-            self.fed.dicts['group_descript'],
+            self.fed,
             self.sub_params,
-            self.params)
+            self.fe_params)
 
     @unittest.skip('hmm')
     def test_apply_multicore_policy(self):
-        apply_multicore_policy(self.fed.dicts['frontend_descript'])
+        self.fed.populate()
+        apply_multicore_policy(self.fed)
 
-    @unittest.skip('hmm')
+    #@unittest.skip('hmm')
     def test_save(self):
+        self.fed.populate(self.fe_params)
         self.fed.save()
 
 
 class TestFrontendDicts(unittest.TestCase):
 
     def setUp(self):
-        self.fe_params = VOFrontendParams(USAGE_PREFIX, STARTUP_DIR, ARGV)
+        transformed_xmlfile = tempfile.NamedTemporaryFile()
+        xml = "fixtures/frontend/frontend.xml"
+        transformed_xmlfile.write(
+            xslt.xslt_xml(
+                old_xmlfile=xml,
+                xslt_plugin_dir=None))
+        transformed_xmlfile.flush()
+        args = ['/usr/sbin/reconfig_frontend', transformed_xmlfile.name]
+        self.fe_params = VOFrontendParams(USAGE_PREFIX, STARTUP_DIR, args)
         self.sub_params = VOFrontendSubParams(self.fe_params.data)
+        self.fed = frontendDicts(
+            self.fe_params, 'fixtures/frontend/work-dir')
         self.fed = frontendDicts(self.fe_params)
 
     def test__init__(self):
@@ -111,8 +126,8 @@ class TestFrontendDicts(unittest.TestCase):
     def test_populate(self):
         self.fed.populate(self.fe_params)
 
-    @unittest.skip('hmm')
     def test_save(self):
+        self.fed.populate(self.fe_params)
         self.fed.save()
 
 

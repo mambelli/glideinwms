@@ -1,16 +1,16 @@
 # File: glidein.descript
 #
-CondorTarballDirMap 	{u'/var/lib/gwms-factory/condor/condor-8.6.5-x86_64_RedHat6-stripped': u'/var/lib/gwms-factory/web-area/stage/condor_bin_1.i6pdq1.tgz', u'/var/lib/gwms-factory/condor/condor-8.6.5-x86_64_RedHat7-stripped': u'/var/lib/gwms-factory/web-area/stage/condor_bin_2.i6pdq1.tgz', u'/usr': u'/var/lib/gwms-factory/web-area/stage/condor_bin_0.i6pdq1.tgz'}
+CondorTarballDirMap 	{u'fixtures/factory/condor/condor-8.6.5-x86_64_RedHat6-stripped': u'fixtures/factory/web-area/stage/condor_bin_1.j1aiHf.tgz'}
 FactoryCollector 	None
 FactoryName 	gfactory_service
 GlideinName 	gfactory_instance
-WebURL 	http://fermicloud322.fnal.gov/factory/stage
+WebURL 	http://fermicloud380.fnal.gov/factory/stage
 PubKeyType 	RSA
 OldPubKeyGraceTime 	900
 MonitorUpdateThreadCount 	1
 RemoveOldCredFreq 	24
 RemoveOldCredAge 	30
-Entries 	el6_osg33,el6_osg34,el7_osg33,el7_osg34
+Entries 	TEST_SITE_3,TEST_SITE_4,TEST_SITE_HTCCE_5,TEST_SITE_1,TEST_SITE_2,TEST_SITE_HTCCE_2
 AdvertiseWithTCP 	False
 AdvertiseWithMultiple 	False
 LoopDelay 	60
@@ -19,10 +19,10 @@ AdvertiseDelay 	5
 RestartAttempts 	3
 RestartInterval 	1800
 EntryParallelWorkers 	0
-LogDir 	server-log
-ClientLogBaseDir 	client-log
-ClientProxiesBaseDir 	/var/lib/gwms-factory/client-proxies
-DowntimesFile 	/var/lib/gwms-factory/work-dir/glideinWMS.downtimes
+LogDir 	fixtures/factory/log/server
+ClientLogBaseDir 	fixtures/factory/log/client
+ClientProxiesBaseDir 	fixtures/factory/client-proxies
+DowntimesFile 	fixtures/factory/work-dir/glideinWMS.downtimes
 MonitorDisplayText 	
 MonitorLink 	
 JobLogRetentionMaxDays 	7.0
