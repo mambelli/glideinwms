@@ -14,6 +14,7 @@
 # Author:
 #   Igor Sfiligoi (Apr 9th 2007 - moved old glideFactory to glideFactoryEntry)
 #
+# MMDB test edit
 
 import os
 import sys
