@@ -1262,6 +1262,7 @@ if ! {
     # ...but be optimist, and leave advertise_only for the actual error handling script
     echo "GLIDEIN_ADVERTISE_ONLY 0"
     echo "GLIDEIN_CONDOR_TOKEN ${GLIDEIN_CONDOR_TOKEN}"
+    echo "GLIDEIN_CONDOR_TOKEN_ORIG ${GLIDEIN_CONDOR_TOKEN}"
     echo "# --- User Parameters ---"
 } >> "${glidein_config}"; then
     early_glidein_failure "Failed in updating '${glidein_config}'"
