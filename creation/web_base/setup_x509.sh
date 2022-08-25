@@ -13,7 +13,7 @@
 glidein_config="$1"
 
 # Constants
-GWMS_CREDENTIALS_SUBDIR=cred.d
+GWMS_CREDENTIALS_SUBDIR=cred.d/idtokens
 gwms_credentials_dir=
 
 # Aux scripts: import gconfig functions and define error_gen
@@ -303,7 +303,7 @@ get_x509_expiration() {
 # - CE collector tokens: ce_*.idtoken in the start directory GLIDEIN_START_DIR_ORIG (0 to many files)
 # 1. from dir: directory to copy from
 # 2. to dir: token directory
-# Sets GLIDEIN_CONDOR_TOKEN_ORIG
+# GLIDEIN_CONDOR_TOKEN_ORIG is better set in glidein_startup.sh
 copy_idtokens() {
     local start_dir from_dir=$1 to_dir=$2
     local cred_glidein cred_glidein_ctr=0 cred_cecoll_ctr=0 cred_ctr=0
@@ -318,7 +318,7 @@ copy_idtokens() {
             warn "Copied glidein token '${i}' to '${to_dir}/'"
             (( cred_glidein_ctr++ ))
             cred_glidein="${to_dir}/$i"
-            GLIDEIN_CONDOR_TOKEN_ORIG="${from_dir}/$i"
+            # GLIDEIN_CONDOR_TOKEN_ORIG="${from_dir}/$i"
         else
             warn "Copied token '${i}' to '${to_dir}/'"
             (( cred_ctr++ ))
@@ -397,10 +397,10 @@ fi
 cred_updated=
 
 # IDTOKENS
-if out=$(copy_idtokens "$GLIDEIN_START_DIR_ORIG" "$gwms_credentials_dir"/idtokens/); then
+if out=$(copy_idtokens "$GLIDEIN_START_DIR_ORIG" "$gwms_credentials_dir"); then
     export GLIDEIN_CONDOR_TOKEN="$out"
     gconfig_add GLIDEIN_CONDOR_TOKEN "$GLIDEIN_CONDOR_TOKEN"
-    gconfig_add GLIDEIN_CONDOR_TOKEN_ORIG "$GLIDEIN_CONDOR_TOKEN_ORIG"
+    #gconfig_add GLIDEIN_CONDOR_TOKEN_ORIG "$GLIDEIN_CONDOR_TOKEN_ORIG"
     if out=$(get_trust_domain); then
         export TRUST_DOMAIN="$out"
         gconfig_add TRUST_DOMAIN "$out"
@@ -417,7 +417,8 @@ if out=$(get_x509_certs_dir); then
     export X509_CERT_DIR="$out"
     if out=$(check_x509_tools); then
         [[ -n "$out" ]] && warn "$out"
-        if out=$(safe_copy_and_protect "$X509_USER_PROXY" "$gwms_credentials_dir/myproxy"); then
+        to_dir=$(dirname "$gwms_credentials_dir")
+        if out=$(safe_copy_and_protect "$X509_USER_PROXY" "$to_dir/myproxy"); then
             # Copy successful, set env variables
             export X509_USER_PROXY_ORIG="$X509_USER_PROXY"
             export X509_USER_PROXY="$out"
