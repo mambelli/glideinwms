@@ -14,12 +14,14 @@ Changes since the last release
 ### New features / functionalities
 
 -   Added `GLIDEIN_PERIODIC_SCRIPT` env variable: when set custom scripts run periodically, started by HTCSS startd cron
+-   Added the possibility to set the Glidein HTCSS TRUST_DOMAIN as attribute in the Frontend configuration
 
 ### Changed defaults / behaviours
 
 -   Frontend configuration valid (reconfig/upgrade successful) even if some HTCSS schedds are not in DNS. Failing only if all schedds are unknown to DNS.
 -   Working and local tmp directories are removed during Glidein cleanup also when the start directory is missing. This result in a loss of Glidein final status information but avoids sandbox leaks on the Worker Node. (issue #189)
 -   HTCSS DC_DAEMON_LIST equal to DAEMON_LIST only in the Factory, in all other GlideinWMS components only selected HTCSS daemons are added explicitly to it (issue #205)
+-   When no HTCSS TRUST_DOMAIN is set (and the COLLECTOR_HOST is used) only the hostname of the first collector is kept, port and synful string are removed. This happens both in the Frontend token issuer and in the retting of the Glidein TRUST_DOMAIN (setup_x509.sh). Previously the port was also kept.
 
 ### Deprecated / removed options and commands
 
@@ -42,6 +44,7 @@ Changes since the last release
 -   Fixed gwms-renew-proxies service should check if local VOMS cert is expired (issue #21)
 -   Fixed python3 check return value in case of exception (PR #211)
 -   Fixed list_get_intersection in singularity_lib.sh that was requiring python2 (PR #212)
+-   Unset SEC_PASSWORD_DIRECTORY in the Glidein HTCSS configuration, was causing warnings for unknown files (PR #226).
 
 ### Testing / Development
 

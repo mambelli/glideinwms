@@ -51,7 +51,7 @@ def token_file_expired(token_file):
     Check validity of token exp and nbf claim.
     Do not check signature, audience, or other claims
 
-    Arguments:
+    Args:
         token_file: (str) a filename containing a jwt
 
     Returns:
@@ -74,7 +74,7 @@ def token_str_expired(token_str):
     Check validity of token exp and nbf claim.
     Do not check signature, audience, or other claims
 
-    Arguments:
+    Args:
         token_str: (str) a string containing a jwt
 
     Returns:
@@ -95,13 +95,12 @@ def token_str_expired(token_str):
 
 
 def simple_scramble(data):
-    """
-    Undo the simple scramble of HTCondor - simply
-    XOR with 0xdeadbeef
+    """Undo the simple scramble of HTCondor
+    simply XOR with 0xdeadbeef
 
     Source: https://github.com/CoffeaTeam/jhub/blob/master/charts/coffea-casa-jhub/files/hub/auth.py#L196-L235
 
-    Arguments:
+    Args:
         data: binary string to be unscrambled
 
     Returns:
@@ -123,11 +122,11 @@ def simple_scramble(data):
 
 
 def derive_master_key(password):
-    """
-    derive an encryption/decryption key
+    """Derive an encryption/decryption key
+
     Source: https://github.com/CoffeaTeam/jhub/blob/master/charts/coffea-casa-jhub/files/hub/auth.py#L196-L235
 
-    Arguments:
+    Args:
         password: (str) an unscrambled HTCondor password
 
     Returns:
@@ -142,9 +141,9 @@ def derive_master_key(password):
 
 
 def sign_token(identity, issuer, kid, master_key, duration=None, scope=None):
-    """
-    Assemble and sign an idtoken
-    Arguments:
+    """Assemble and sign an idtoken
+
+    Args:
         identity: (str)  who the token was generated for
         issuer: (str) idtoken issuer, typically HTCondor Collector
         kid: (str) Key ID
@@ -175,10 +174,9 @@ def sign_token(identity, issuer, kid, master_key, duration=None, scope=None):
 
 
 def create_and_sign_token(pwd_file, issuer=None, identity=None, kid=None, duration=None, scope=None):
-    """
-    Create an HTCondor IDTOKEN
+    """Create an HTCondor IDTOKEN
 
-    Arguments:
+    Args:
         pwd_file: (str) file containing an HTCondor password
         issuer: (str, optional) default is HTCondor TRUST_DOMAIN
         identity: (str, optional) identity claim, default is $USERNAME@$HOSTNAME
@@ -196,6 +194,7 @@ def create_and_sign_token(pwd_file, issuer=None, identity=None, kid=None, durati
     if not kid:
         kid = os.path.basename(pwd_file)
     if not issuer:
+        # As of Oct 2022 Brian B. stated that TRUST_DOMAIN is an opaque string to be taken as it is
         # split() has been added because condor is only considering the first part. Here is Brian B. comment:
         # "any comma, space, or tab character in the trust domain is treated as a separator.  Hence, for purpose of finding the token,
         # TRUST_DOMAIN=vocms0803.cern.ch:9618,cmssrv623.fnal.gov:9618
@@ -204,8 +203,20 @@ def create_and_sign_token(pwd_file, issuer=None, identity=None, kid=None, durati
         # are all considered the same - vocms0803.cern.ch:9618."
 
         full_issuer = iexe_cmd("condor_config_val TRUST_DOMAIN").strip()
-        split_issuers = re.split(" |,|\t", full_issuer)
-        issuer = split_issuers[0]
+        if not full_issuer:
+            logSupport.log.warning(
+                "Unable to retrieve TRUST_DOMAIN and no issuer provided: token will have empty 'iss'"
+            )
+        else:
+            is_default_trust_domain = "# at: <Default>" in iexe_cmd("condor_config_val -v TRUST_DOMAIN")
+            if is_default_trust_domain:
+                # Default TRUST_DOMAIN, value from COLLECTOR_HOST, keep only the host name
+                # Using the same splitting as creation/web_base/setup_x509.sh
+                split_issuers = re.split(" |,|\t", full_issuer)  # get only the first collector
+                issuer = re.split(r":|\?", split_issuers[0])[0]  # keep only the host name
+            else:
+                # Keep TRUST_DOMAIN string as it is if set explicitly in HTCSS configuration
+                issuer = full_issuer
     if not identity:
         identity = f"{os.getlogin()}@{socket.gethostname()}"
 

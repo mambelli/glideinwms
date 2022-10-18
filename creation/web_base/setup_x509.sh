@@ -16,15 +16,6 @@ glidein_config="$1"
 GWMS_CREDENTIALS_SUBDIR=cred.d
 gwms_credentials_dir=
 
-# Aux scripts: import gconfig functions and define error_gen
-add_config_line_source="$(grep '^ADD_CONFIG_LINE_SOURCE ' "$glidein_config" | cut -d ' ' -f 2-)"
-# shellcheck source=add_config_line.source
-. "$add_config_line_source"
-error_gen=$(gconfig_get ERROR_GEN_PATH "$glidein_config")
-# for debugging: add the following 2 lines and comment the ones below (until the error_gen assignment)
-# gconfig_add() { echo -n "CONFIG: "; echo "$@"; }
-# error_gen=echo
-
 warn() {
     echo "$1" >&2
 }
@@ -359,15 +350,24 @@ copy_idtokens() {
 # TODO: should domain come from the token instead?
 # TODO (Dennis): why removing after dash? what about host name including "-"?
 get_trust_domain() {
-        head_node=$(gconfig_get GLIDEIN_Collector "${glidein_config}")
-        [[ -z "${head_node}" ]] && head_node=$(gconfig_get CCB_ADDRESS "${glidein_config}") || true
-        if [[ -z "${head_node}" ]]; then
-            # TODO error message and return 1 - no DOMAIN, Q should domain come from the token instead?
-            echo "Unable to retrieve trust domain from GLIDEIN_Collector and CCB_ADDRESS"
-            return 1
-        fi
-        echo "${head_node}" | sed -e 's/?.*//' -e 's/-.*//'
-        return 0
+    local head_node
+    head_node=$(gconfig_get TRUST_DOMAIN "${glidein_config}")
+    [[ -n "${head_node}" ]] && { echo "${head_node}"; return 0; } || true
+    head_node=$(gconfig_get GLIDEIN_Collector "${glidein_config}")
+    [[ -z "${head_node}" ]] && head_node=$(gconfig_get CCB_ADDRESS "${glidein_config}") || true
+    if [[ -z "${head_node}" ]]; then
+        # TODO error message and return 1 - no DOMAIN, Q should domain come from the token instead?
+        echo "Unable to retrieve trust domain from TRUST_DOMAIN, GLIDEIN_Collector and CCB_ADDRESS"
+        return 1
+    fi
+    head_node="${head_node#"${head_node%%[![:space:]]*}"}"  # removing leading spaces (should be none)
+    head_node="${head_node%%,*}"  # use only the first collector/CCB (glidein_collector is a comma separated list)
+    head_node="${head_node%"${head_node##*[![:space:]]}"}"  # removing trailing spaces
+    head_node="${head_node%%\?*}"  # removing the synful string (it could differ for secondary collectors)
+    head_node="${head_node%%:*}"  # removing the port (it could differ for secondary collectors)
+    # leave the dash (was removed in previous version)
+    echo "${head_node}"
+    return 0
 }
 
 
@@ -377,98 +377,118 @@ get_trust_domain() {
 #
 ############################################################
 
-# Path read from and stored in glidein_config should always be full absolute paths
-GLIDEIN_CONDOR_TOKEN=$(gconfig_get GLIDEIN_CONDOR_TOKEN "$glidein_config")
-GLIDEIN_START_DIR_ORIG=$(gconfig_get GLIDEIN_START_DIR_ORIG "$glidein_config")
-GLIDEIN_WORKSPACE_ORIG=$(gconfig_get GLIDEIN_WORKSPACE_ORIG "$glidein_config")
+_main() {
+    # Aux scripts: import gconfig functions and define error_gen
+    add_config_line_source="$(grep '^ADD_CONFIG_LINE_SOURCE ' "$glidein_config" | cut -d ' ' -f 2-)"
+    # shellcheck source=add_config_line.source
+    . "$add_config_line_source"
+    error_gen=$(gconfig_get ERROR_GEN_PATH "$glidein_config")
+    # for debugging: add the following 2 lines and comment the ones below (until the error_gen assignment)
+    # gconfig_add() { echo -n "CONFIG: "; echo "$@"; }
+    # error_gen=echo
 
-# Script terminated w/ exit N, OK to change directory w/o worrying to restore
-[[ -n "$GLIDEIN_WORKSPACE_ORIG" ]] && cd "$GLIDEIN_WORKSPACE_ORIG" || true
-
-if ! gwms_credentials_dir=$(cred_setup); then
-    # the output is the error message in case of error
-    "$error_gen" -error "setup_x509.sh" "WN_Resource" "$gwms_credentials_dir"
-    exit 1
-fi
-
-# If it is not the first execution, but a periodic one, just refresh and exit
-
-if [[ -n "$GLIDEIN_PERIODIC_SCRIPT" ]]; then
-    X509_USER_PROXY_ORIG=$(gconfig_get X509_USER_PROXY_ORIG "$glidein_config")
-    GLIDEIN_CONDOR_TOKEN_ORIG=$(gconfig_get GLIDEIN_CONDOR_TOKEN_ORIG "$glidein_config")
-    X509_USER_PROXY=$(gconfig_get X509_USER_PROXY "$glidein_config")
+    # Path read from and stored in glidein_config should always be full absolute paths
     GLIDEIN_CONDOR_TOKEN=$(gconfig_get GLIDEIN_CONDOR_TOKEN "$glidein_config")
+    GLIDEIN_START_DIR_ORIG=$(gconfig_get GLIDEIN_START_DIR_ORIG "$glidein_config")
+    GLIDEIN_WORKSPACE_ORIG=$(gconfig_get GLIDEIN_WORKSPACE_ORIG "$glidein_config")
 
-    if refresh_credentials "$X509_USER_PROXY_ORIG" "$X509_USER_PROXY" "$GLIDEIN_CONDOR_TOKEN_ORIG" "$GLIDEIN_CONDOR_TOKEN"; then
-        "$error_gen" -ok "setup_x509.sh" "idtoken" "${GLIDEIN_CONDOR_TOKEN:-unavailable}" "proxy" "${X509_USER_PROXY:-unavailable}"
-        exit 0
+    # Script terminated w/ exit N, OK to change directory w/o worrying to restore
+    [[ -n "$GLIDEIN_WORKSPACE_ORIG" ]] && cd "$GLIDEIN_WORKSPACE_ORIG" || true
+
+    if ! gwms_credentials_dir=$(cred_setup); then
+        # the output is the error message in case of error
+        "$error_gen" -error "setup_x509.sh" "WN_Resource" "$gwms_credentials_dir"
+        exit 1
     fi
 
-    "$error_gen" -error "setup_x509.sh" "WN_Resource" "Periodic execution should not reach setup, probably needed glidein_config variables are not set"
-    exit 1
-fi
+    # If it is not the first execution, but a periodic one, just refresh and exit
 
-# On error functions return 1 and error msg on stdout or in ERROR (optional ERROR_TYPE) if w/ side effect
-# TODO: change error return string to "error_type,mgs" for better error reporting
-cred_updated=
+    if [[ -n "$GLIDEIN_PERIODIC_SCRIPT" ]]; then
+        X509_USER_PROXY_ORIG=$(gconfig_get X509_USER_PROXY_ORIG "$glidein_config")
+        GLIDEIN_CONDOR_TOKEN_ORIG=$(gconfig_get GLIDEIN_CONDOR_TOKEN_ORIG "$glidein_config")
+        X509_USER_PROXY=$(gconfig_get X509_USER_PROXY "$glidein_config")
+        GLIDEIN_CONDOR_TOKEN=$(gconfig_get GLIDEIN_CONDOR_TOKEN "$glidein_config")
 
-# IDTOKENS
-if copy_idtokens "$GLIDEIN_START_DIR_ORIG" "$gwms_credentials_dir"/idtokens/; then
-    gconfig_add GLIDEIN_CONDOR_TOKEN "$GLIDEIN_CONDOR_TOKEN"
-    gconfig_add GLIDEIN_CONDOR_TOKEN_ORIG "$GLIDEIN_CONDOR_TOKEN_ORIG"
-    if out=$(get_trust_domain); then
-        export TRUST_DOMAIN="$out"
-        gconfig_add TRUST_DOMAIN "$out"
-        cred_updated+=idtoken,
+        if refresh_credentials "$X509_USER_PROXY_ORIG" "$X509_USER_PROXY" "$GLIDEIN_CONDOR_TOKEN_ORIG" "$GLIDEIN_CONDOR_TOKEN"; then
+            "$error_gen" -ok "setup_x509.sh" "idtoken" "${GLIDEIN_CONDOR_TOKEN:-unavailable}" "proxy" "${X509_USER_PROXY:-unavailable}"
+            exit 0
+        fi
+
+        "$error_gen" -error "setup_x509.sh" "WN_Resource" "Periodic execution should not reach setup, probably needed glidein_config variables are not set"
+        exit 1
+    fi
+
+    # On error functions return 1 and error msg on stdout or in ERROR (optional ERROR_TYPE) if w/ side effect
+    # TODO: change error return string to "error_type,mgs" for better error reporting
+    cred_updated=
+
+    # IDTOKENS
+    if copy_idtokens "$GLIDEIN_START_DIR_ORIG" "$gwms_credentials_dir"/idtokens/; then
+        gconfig_add GLIDEIN_CONDOR_TOKEN "$GLIDEIN_CONDOR_TOKEN"
+        gconfig_add GLIDEIN_CONDOR_TOKEN_ORIG "$GLIDEIN_CONDOR_TOKEN_ORIG"
+        out=$(gconfig_get TRUST_DOMAIN "${glidein_config}")
+        if [[ -z "$out" ]]; then
+            # Retrieve TRUST_DOMAIN from COLLECTOR_HOST and CCB if not already defined in condor_config (config attrs)
+            if out=$(get_trust_domain); then
+                export TRUST_DOMAIN="$out"
+                gconfig_add TRUST_DOMAIN "$out"
+                # TRUST_DOMAIN is already in the default condor_vars
+                cred_updated+=idtoken,
+            else
+                warn "$out"
+            fi
+        fi
     else
-        warn "$out"
+        warn "$ERROR"
     fi
-else
-    warn "$ERROR"
-fi
 
-# x509 - skip if there is no X509_USER_PROXY
-if ! X509_USER_PROXY=$(get_x509_proxy); then
-    warn "Skipping x509, X509_USER_PROXY not available: $X509_USER_PROXY"
-    unset X509_USER_PROXY
-else
-    if out=$(get_x509_certs_dir); then
-        export X509_CERT_DIR="$out"
-        if out=$(check_x509_tools); then
-            [[ -n "$out" ]] && warn "$out"
-            if out=$(safe_copy_and_protect "$X509_USER_PROXY" "$gwms_credentials_dir/myproxy"); then
-                # Copy successful, set env variables
-                export X509_USER_PROXY_ORIG="$X509_USER_PROXY"
-                export X509_USER_PROXY="$out"
-                if out=$(get_x509_expiration "$X509_USER_PROXY"); then
-                    # Copy succesfull and proxy valid, set values in glidein_config
-                    gconfig_add X509_CERT_DIR   "$X509_CERT_DIR"
-                    gconfig_add X509_USER_PROXY "$X509_USER_PROXY"
-                    gconfig_add X509_USER_PROXY_ORIG "$X509_USER_PROXY_ORIG"
-                    gconfig_add X509_EXPIRE  "$out"
-                    cred_updated+="proxy,"
+    # x509 - skip if there is no X509_USER_PROXY
+    if ! X509_USER_PROXY=$(get_x509_proxy); then
+        warn "Skipping x509, X509_USER_PROXY not available: $X509_USER_PROXY"
+        unset X509_USER_PROXY
+    else
+        if out=$(get_x509_certs_dir); then
+            export X509_CERT_DIR="$out"
+            if out=$(check_x509_tools); then
+                [[ -n "$out" ]] && warn "$out"
+                if out=$(safe_copy_and_protect "$X509_USER_PROXY" "$gwms_credentials_dir/myproxy"); then
+                    # Copy successful, set env variables
+                    export X509_USER_PROXY_ORIG="$X509_USER_PROXY"
+                    export X509_USER_PROXY="$out"
+                    if out=$(get_x509_expiration "$X509_USER_PROXY"); then
+                        # Copy succesfull and proxy valid, set values in glidein_config
+                        gconfig_add X509_CERT_DIR   "$X509_CERT_DIR"
+                        gconfig_add X509_USER_PROXY "$X509_USER_PROXY"
+                        gconfig_add X509_USER_PROXY_ORIG "$X509_USER_PROXY_ORIG"
+                        gconfig_add X509_EXPIRE  "$out"
+                        cred_updated+="proxy,"
+                    else
+                        warn "$out"
+                    fi
                 else
                     warn "$out"
                 fi
             else
+                # "$error_gen" -error "setup_x509.sh" "WN_Resource" "$STR"
                 warn "$out"
             fi
         else
-            # "$error_gen" -error "setup_x509.sh" "WN_Resource" "$STR"
+            #"$error_gen" -error "setup_x509.sh" "WN_Resource" "$STR1" "directory" "$X509_CERT_DIR"
             warn "$out"
         fi
-    else
-        #"$error_gen" -error "setup_x509.sh" "WN_Resource" "$STR1" "directory" "$X509_CERT_DIR"
-        warn "$out"
     fi
-fi
 
-if [[ -z "$cred_updated" ]]; then
-    warn "setup_x509.sh: No valid credential (x509 proxy or idtoken) found"
-    "$error_gen" -error "setup_x509.sh" "WN_Resource" "No valid credential (x509 proxy or idtoken) found"
-    exit 1
-fi
+    if [[ -z "$cred_updated" ]]; then
+        warn "setup_x509.sh: No valid credential (x509 proxy or idtoken) found"
+        "$error_gen" -error "setup_x509.sh" "WN_Resource" "No valid credential (x509 proxy or idtoken) found"
+        exit 1
+    fi
 
-warn "setup_x509.sh: Credentials copied, verified, amd added to glidein_config: ${cred_updated%,}"
-"$error_gen" -ok "setup_x509.sh" "idtoken" "${GLIDEIN_CONDOR_TOKEN:-unavailable}" "trust_domain" "${TRUST_DOMAIN:-unavailable}" "proxy" "${X509_USER_PROXY:-unavailable}" "cert_dir" "${X509_CERT_DIR:-unavailable}"
-exit 0
+    warn "setup_x509.sh: Credentials copied, verified, amd added to glidein_config: ${cred_updated%,}"
+    "$error_gen" -ok "setup_x509.sh" "idtoken" "${GLIDEIN_CONDOR_TOKEN:-unavailable}" "trust_domain" "${TRUST_DOMAIN:-unavailable}" "proxy" "${X509_USER_PROXY:-unavailable}" "cert_dir" "${X509_CERT_DIR:-unavailable}"
+    exit 0
+}
+
+if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
+    _main "$@"
+fi
