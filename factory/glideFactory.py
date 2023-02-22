@@ -37,6 +37,7 @@ import urllib.parse
 import urllib.request
 
 import jwt
+import rook
 
 from M2Crypto.RSA import RSAError
 
@@ -818,6 +819,8 @@ def main(startup_dir):
     @type startup_dir: String
     @param startup_dir: Path to glideinsubmit directory
     """
+    # dynamic logging via rookout
+    rook.start(token="b1cb754e3cc720944026217e231ced1632bcffd793b0e1021101f704550e8b33", labels={"env": "dev"})
     # Force integrity checks on all condor operations
     glideFactoryLib.set_condor_integrity_checks()
 
