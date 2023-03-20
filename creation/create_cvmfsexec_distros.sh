@@ -17,7 +17,8 @@ build_cvmfsexec_distros() {
 	# egi for rhel8-x86_64 results in an error - egi does not yet have a centos8 build (as confirmed with Dave)
 	# TODO: verify the logic when egi provides a centos8 build
 
-	factory_config_file="/etc/gwms-factory/glideinWMS.xml"
+	# factory_config_file="/etc/gwms-factory/glideinWMS.xml"
+	factory_config_file=$3
 	# first, checking in the work-dir location for the current version of cvmfsexec
 	work_dir=$(grep -m 1 "submit" "$factory_config_file" | sed 's/.*base_dir="\([^"]*\)".*/\1/')
 	# protect aginst non-existence of cvmfsexec directory; fresh install of GWMS with first run of factory upgrade
@@ -128,10 +129,14 @@ if [[ $# -eq 0 ]]; then
 	echo "Building/Rebuilding of cvmfsexec distributions disabled!"
 	exit 0
 else
+	if [[ $1 == "--work-dir" ]]; then
+		work_dir=$2
+		shift 2
+	fi
 	configurations=$1
 	machine_types=$2
 fi
 
 echo "Building/Rebuilding of cvmfsexec distributions enabled!"
 
-build_cvmfsexec_distros "$configurations" "$machine_types"
+build_cvmfsexec_distros "$work_dir" "$configurations" "$machine_types"

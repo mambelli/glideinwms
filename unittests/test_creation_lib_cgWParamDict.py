@@ -53,9 +53,9 @@ module_globals = globals()
 unittest_dir = os.path.dirname(os.path.realpath(module_globals["__file__"]))
 
 if "GLIDEINWMS_LOCATION" in os.environ:
-    sys.path.append(os.path.join(os.environ["GLIDEINWMS_LOCATION"], "creation"))
+    os.environ["PATH"] += os.pathsep + os.path.join(os.environ["GLIDEINWMS_LOCATION"], "creation")
 else:
-    sys.path.append(os.path.join(unittest_dir, "../creation"))
+    os.environ["PATH"] += os.pathsep + os.path.join(unittest_dir, "../creation")
 
 
 class TestGlideinDicts(unittest.TestCase):
