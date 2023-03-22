@@ -331,7 +331,7 @@ class glideinMainDicts(cgWDictFile.glideinMainDicts):
         print(f"{os.environ.get('srcdir')}")
         print(f"{os.environ.get('workdir')}")
         print(f"{os.environ.get('PATH')}")
-        args = "create_cvmfsexec_distros.sh " + cfgs + " " + mtypes
+        args = " ".join(["create_cvmfsexec_distros.sh", "--work-dir", self.work_dir, cfgs, mtypes])
         # for debugging
         print(f"cfgs: '{cfgs}'", file=sys.stderr)
         print(f"mtypes: '{mtypes}'", file=sys.stderr)

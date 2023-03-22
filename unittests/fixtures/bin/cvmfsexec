@@ -1,0 +1,17 @@
+#!/bin/bash
+
+# SPDX-FileCopyrightText: 2009 Fermi Research Alliance, LLC
+# SPDX-License-Identifier: Apache-2.0
+
+# cvmfsexec replacement for testing purposes
+# this allows to run the unit tests involving create_cvmfsexec_distros.sh 
+# on platforms where cvmfsexec is not supported (e.g. Mac)
+
+# PATH was prepended w/ 'fixtures/bin' as first element in the unit test
+if out=$(PATH="${PATH#*fixtures/bin/:}"; PATH="${PATH#*fixtures/bin:}"; cvmfsexec "$@"); then
+    echo "$out"
+else
+    # "0" is the default version (variable initialization value) in create_cvmfsexec_distros.sh
+    # This way if there is no previous distro nothing will be built
+    echo "0"
+fi
