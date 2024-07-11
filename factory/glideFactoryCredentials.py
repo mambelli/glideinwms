@@ -11,6 +11,7 @@ import shutil
 
 from glideinwms.lib import condorMonitor, logSupport
 from glideinwms.lib.defaults import force_bytes
+from glideinwms.lib.util import is_str_safe
 
 from . import glideFactoryInterface, glideFactoryLib
 
@@ -51,7 +52,7 @@ class SubmitCredentials:
         """
         Adds a security credential.
         """
-        if not glideFactoryLib.is_str_safe(filename):
+        if not is_str_safe(filename):
             return False
 
         cred_fname = os.path.join(self.cred_dir, "credential_%s" % filename)

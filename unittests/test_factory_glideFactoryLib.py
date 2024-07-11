@@ -15,44 +15,6 @@ from unittest import mock
 
 import xmlrunner
 
-# from glideinwms.factory.glideFactoryLib import GlideinTotals
-# from glideinwms.factory.glideFactoryLib import isGlideinHeldNTimes
-# from glideinwms.factory.glideFactoryLib import update_x509_proxy_file
-# from glideinwms.factory.glideFactoryLib import ClientWeb
-# from glideinwms.factory.glideFactoryLib import keepIdleGlideins
-# from glideinwms.factory.glideFactoryLib import clean_glidein_queue
-# from glideinwms.factory.glideFactoryLib import sanitizeGlideins
-# from glideinwms.factory.glideFactoryLib import logStats
-# from glideinwms.factory.glideFactoryLib import logWorkRequest
-# from glideinwms.factory.glideFactoryLib import get_status_glideidx
-# from glideinwms.factory.glideFactoryLib import hash_status
-# from glideinwms.factory.glideFactoryLib import sum_idle_count
-# from glideinwms.factory.glideFactoryLib import hash_statusStale
-# from glideinwms.factory.glideFactoryLib import diffList
-# from glideinwms.factory.glideFactoryLib import extractStaleSimple
-# from glideinwms.factory.glideFactoryLib import extractUnrecoverableHeldSimple
-# from glideinwms.factory.glideFactoryLib import extractUnrecoverableHeldForceX
-# from glideinwms.factory.glideFactoryLib import extractRecoverableHeldSimple
-# from glideinwms.factory.glideFactoryLib import extractRecoverableHeldSimpleWithinLimits
-# from glideinwms.factory.glideFactoryLib import extractHeldSimple
-# from glideinwms.factory.glideFactoryLib import extractIdleSimple
-# from glideinwms.factory.glideFactoryLib import extractIdleUnsubmitted
-# from glideinwms.factory.glideFactoryLib import extractIdleQueued
-# from glideinwms.factory.glideFactoryLib import extractNonRunSimple
-# from glideinwms.factory.glideFactoryLib import extractRunSimple
-# from glideinwms.factory.glideFactoryLib import extractRunStale
-# from glideinwms.factory.glideFactoryLib import group_unclaimed
-# from glideinwms.factory.glideFactoryLib import schedd_name2str
-# from glideinwms.factory.glideFactoryLib import extractJobId
-# from glideinwms.factory.glideFactoryLib import escapeParam
-# from glideinwms.factory.glideFactoryLib import executeSubmit
-# from glideinwms.factory.glideFactoryLib import pickSubmitFile
-# from glideinwms.factory.glideFactoryLib import submitGlideins
-# from glideinwms.factory.glideFactoryLib import removeGlideins
-# from glideinwms.factory.glideFactoryLib import releaseGlideins
-# from glideinwms.factory.glideFactoryLib import in_submit_environment
-# from glideinwms.factory.glideFactoryLib import get_submit_environment
-# from glideinwms.factory.glideFactoryLib import isGlideinWithinHeldLimits
 from glideinwms.factory.glideFactoryLib import (
     days2sec,
     env_list2dict,
@@ -71,7 +33,6 @@ from glideinwms.factory.glideFactoryLib import (
     set_condor_integrity_checks,
     which,
 )
-from glideinwms.lib.util import is_str_safe
 from glideinwms.unittests.unittest_utils import FakeLogger, TestImportError
 
 try:
@@ -273,12 +234,6 @@ class TestFactoryConfig(unittest.TestCase):
         self.assertEqual(crd.glidein_name, self.cnf.glidein_name)
         self.assertEqual(crd.entry_name, entry_name)
         self.assertEqual(crd.client_name, client_name)
-
-    def test_is_str_safe(self):
-        s1 = "//\\"
-        self.assertFalse(is_str_safe(s1))
-        s2 = "lalalala"
-        self.assertTrue(is_str_safe(s2))
 
     def test_env_list2dict(self):
         env = ["a=b", "c=d"]
