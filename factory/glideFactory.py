@@ -202,8 +202,8 @@ def generate_log_tokens(startup_dir, glideinDescript):
     # Issue a token for each entry-recipient pair
     for entry in entries:
         # Get the list of recipients
-        if "LOG_RECIPIENTS_FACTORY" in glideFactoryConfig.JobParams(entry).data:
-            log_recipients = glideFactoryConfig.JobParams(entry).data["LOG_RECIPIENTS_FACTORY"].split()
+        if "GLIDEIN_LOG_RECIPIENTS_FACTORY" in glideFactoryConfig.JobParams(entry).data:
+            log_recipients = glideFactoryConfig.JobParams(entry).data["GLIDEIN_LOG_RECIPIENTS_FACTORY"].split()
         else:
             log_recipients = []
 

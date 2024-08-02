@@ -3,6 +3,28 @@ SPDX-FileCopyrightText: 2009 Fermi Research Alliance, LLC
 SPDX-License-Identifier: Apache-2.0
 -->
 
+## Changes Since Last Release OR vX.Y.Z \[yyyy-mm-dd\]
+
+Changes since the last release
+
+### New features / functionalities
+
+-   Added custom log server example (glideinwms-logging) (Issue #398, PR)
+
+### Changed defaults / behaviours
+
+### Deprecated / removed options and commands
+
+### Security Related Fixes
+
+### Bug Fixes
+
+-   Fixed JWT logging credentials not transferred to the Glidein. This includes removal of DictFile.append() and use of add_environment() for JWT tokens (Issue #398, PR)
+
+### Testing / Development
+
+### Known Issues
+
 ## v3.10.7 \[2024-06-21\]
 
 Added black hole detection and ability to set jobs minimum memory for resource provisioning.
@@ -110,7 +132,7 @@ Bug fix quick release
 
 -   Fixed missing arguments from rrdtool fetch call (Issue #351, PR #352)
 -   gconfig.py to use `gwms-python`, not use `python3` (Issue #349, PR #350)
--   Fixed alternative Shell code still using the `python` (i.e. python2) interpreter (PR #353)
+-   Fixed alternative Shell code still using the `python` (i.e. python2) interpreter (Issue #289, PR #353)
 
 ### Testing / Development
 
