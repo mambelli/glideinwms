@@ -162,7 +162,7 @@ log_init() {
     fi
 
     # Setup tokens to authenticate with log servers
-    log_recipients=($(gconfig_get GLIDEIN_LOG_RECIPIENTS "${glidein_config}"))
+    log_recipients=($(gconfig_get GLIDEIN_LOG_RECIPIENTS_FACTORY "${glidein_config}") $(gconfig_get GLIDEIN_LOG_RECIPIENTS "${glidein_config}"))
     local no_send=0
     if [ "${#log_recipients[@]}" -eq 0 ]; then
         warn "log_init: no recipients configured. Logs will still be produced, but not forwarded to remote servers."
@@ -230,7 +230,7 @@ log_setup() {
     stdout_logfile=$(gconfig_get GLIDEIN_STDOUT_LOGFILE "${glidein_config}")
     stderr_logfile=$(gconfig_get GLIDEIN_STDERR_LOGFILE "${glidein_config}")
     log_logfile=$(gconfig_get GLIDEIN_LOG_LOGFILE "${glidein_config}")
-    log_recipients=($(gconfig_get GLIDEIN_LOG_RECIPIENTS "${glidein_config}"))
+    log_recipients=($(gconfig_get GLIDEIN_LOG_RECIPIENTS_FACTORY "${glidein_config}") $(gconfig_get GLIDEIN_LOG_RECIPIENTS "${glidein_config}"))
     log_no_send=$(gconfig_get GLIDEIN_LOG_NO_SEND "${glidein_config}")
     log_relative_basepath=$(gconfig_get GLIDEIN_LOG_RELATIVE_BASEPATH "${glidein_config}")
     curl_version=$(gconfig_get CURL_VERSION "${glidein_config}")
