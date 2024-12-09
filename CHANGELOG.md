@@ -20,6 +20,8 @@ Changes since the last release
 
 ### Bug Fixes
 
+-   Fixed early truncation in log files configuration and inconsistent documentation (PR #462)
+
 ### Testing / Development
 
 ### Known Issues
