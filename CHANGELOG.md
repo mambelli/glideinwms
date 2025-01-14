@@ -24,6 +24,31 @@ Changes since the last release
 
 ### Known Issues
 
+## v3.11.0 \[2025-01-21\]
+
+Credentials refactoring
+
+### New features / functionalities
+
+-   Add new hierarchical credential classes for a number of credential types
+-   Add new parameter classes to handle security parameters orthogonally to credentials
+-   Refactors credential generators to enhance its capabilities and allow for the generation of other attributes besides credentials
+-   Add support for builtin generators such as the RoundRobinGenerator generator
+
+### Changed defaults / behaviours
+
+-   Skip glideclient advertising if there are no Glideins to request or actively running on a given group
+
+### Deprecated / removed options and commands
+
+### Security Related Fixes
+
+### Bug Fixes
+
+### Testing / Development
+
+### Known Issues
+
 ## v3.10.9 \[2025-01-16\]
 
 Added support for the HTCondor distributed apptainer.
