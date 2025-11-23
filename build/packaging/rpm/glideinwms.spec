@@ -24,12 +24,15 @@
 
 %global frontend_xml frontend.xml
 %global factory_xml glideinWMS.xml
-%global web_dir %{_localstatedir}/lib/gwms-frontend/web-area
-%global web_base %{_localstatedir}/lib/gwms-frontend/web-base
-%global frontend_dir %{_localstatedir}/lib/gwms-frontend/vofrontend
-%global frontend_token_dir %{_localstatedir}/lib/gwms-frontend/tokens.d
-%global frontend_passwd_dir %{_localstatedir}/lib/gwms-frontend/passwords.d
-%global frontend_cache_dir %{_localstatedir}/lib/gwms-frontend/cache
+%global frontend_base_dir %{_localstatedir}/lib/gwms-frontend
+%global web_dir %{frontend_base_dir}/web-area
+%global web_base %{frontend_base_dir}/web-base
+%global frontend_dir %{frontend_base_dir}/vofrontend
+%global frontend_cred_dir %{frontend_base_dir}/cred.d
+%global frontend_key_dir %{frontend_cred_dir}/keys.d
+%global frontend_token_dir %{frontend_cred_dir}/tokens.d
+%global frontend_passwd_dir %{frontend_cred_dir}/passwords.d
+%global frontend_cache_dir %{frontend_base_dir}/cache
 %global factory_web_dir %{_localstatedir}/lib/gwms-factory/web-area
 %global factory_web_base %{_localstatedir}/lib/gwms-factory/web-base
 %global factory_dir %{_localstatedir}/lib/gwms-factory/work-dir
@@ -472,12 +475,18 @@ install -m 0644 creation/templates/gwms-renew-proxies.cron $RPM_BUILD_ROOT%{_sys
 %endif
 
 # Install the web directory
+install -d $RPM_BUILD_ROOT%{frontend_base_dir}
+install -m 0644 install/doc/var_lib_frontend_README.md $RPM_BUILD_ROOT%{frontend_base_dir}/README.md
 install -d $RPM_BUILD_ROOT%{frontend_dir}
-install -d $RPM_BUILD_ROOT%{frontend_token_dir}
-install -d $RPM_BUILD_ROOT%{frontend_passwd_dir}
+install -m 0700 -d $RPM_BUILD_ROOT%{frontend_cred_dir}
+install -m 0700 -d $RPM_BUILD_ROOT%{frontend_key_dir}
+install -m 0700 -d $RPM_BUILD_ROOT%{frontend_token_dir}
+install -m 0700 -d $RPM_BUILD_ROOT%{frontend_passwd_dir}
 install -d $RPM_BUILD_ROOT%{frontend_cache_dir}
 install -d $RPM_BUILD_ROOT%{web_base}
 install -d $RPM_BUILD_ROOT%{web_dir}
+install -d $RPM_BUILD_ROOT%{web_dir}/cred/
+install -d $RPM_BUILD_ROOT%{web_dir}/cred/scitokens/
 install -d $RPM_BUILD_ROOT%{web_dir}/monitor/
 install -d $RPM_BUILD_ROOT%{web_dir}/stage/
 install -d $RPM_BUILD_ROOT%{web_dir}/stage/group_main
@@ -533,6 +542,10 @@ cp -arp creation/web_base/frontend/images $RPM_BUILD_ROOT%{web_dir}/monitor/
 # Install the frontend config dir
 install -d $RPM_BUILD_ROOT/%{_sysconfdir}/sysconfig
 install -d $RPM_BUILD_ROOT/%{_sysconfdir}/gwms-frontend
+install -m 0644 install/doc/etc_frontend_README.md $RPM_BUILD_ROOT%{_sysconfdir}/gwms-frontend/README.md
+install -m 0700 -d $RPM_BUILD_ROOT/%{_sysconfdir}/gwms-frontend/cred.d
+install -m 0700 -d $RPM_BUILD_ROOT/%{_sysconfdir}/gwms-frontend/cred.d/passwords.d
+install -m 0700 -d $RPM_BUILD_ROOT/%{_sysconfdir}/gwms-frontend/cred.d/keys.d
 install -d $RPM_BUILD_ROOT/%{_sysconfdir}/gwms-frontend/plugin.d
 install -d $RPM_BUILD_ROOT/%{_sysconfdir}/gwms-frontend/hooks.reconfig.pre
 install -d $RPM_BUILD_ROOT/%{_sysconfdir}/gwms-frontend/hooks.reconfig.post
