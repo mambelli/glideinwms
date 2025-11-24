@@ -88,6 +88,10 @@ class GeneratorContext(dict):
 class Generator(ABC, Generic[T]):
     """Base class for generators"""
 
+    # Dictionary used to validate the context: specify required and default values
+    # See GeneratorContext.validate() for  CONTEXT_VALIDATION format specifications
+    CONTEXT_VALIDATION = {}
+
     def __init__(self, context: Optional[Mapping] = None, instance_id: Optional[str] = None):
         self.snapshots = {}
         self.context = GeneratorContext(context)
@@ -265,8 +269,9 @@ class CachedGenerator(Generator[T]):
         discriminator values and the attributes of the glidein element.
 
         Args:
-            discriminator (Union[str, list[str]]): a string or a list of strings that specify the discriminator values
+            discriminator_list (Union[str, list[str]]): a string or a list of strings that specify the discriminator values
             separator (str): a string used to separate the discriminator values in the resulting string
+            snapshot (Optional[str]): an optional snapshot identifier
             **kwargs: runtime arguments that include the glidein element and other necessary attributes
 
         Returns:
@@ -302,22 +307,19 @@ class CachedGenerator(Generator[T]):
         )
 
 
-def load_generator(module: str, context: Optional[Mapping] = None) -> Generator:
-    """Load a generator from a module and optionally associate it with a context.
+def load_bare_generator(module: str) -> str:
+    """Load a generator from a module and return its name.
 
     Args:
         module (str): module that exports a generator
 
     Raises:
         ImportError: when a `Generator` object cannot be imported from `module`
-        GeneratorError: when the setup or contextualization of a `Generator` object fail
 
     Returns:
-        Generator: contextualized generator object
+        str: the name of the generator. The key in _loaded_generators
     """
-
     module_name = re.sub(r"\.py[co]?$", "", os.path.basename(module))  # Extract module name from path
-
     try:
         if module_name not in _loaded_generators:
             imported_module = import_module(module)
@@ -329,6 +331,61 @@ def load_generator(module: str, context: Optional[Mapping] = None) -> Generator:
                 )
     except ImportError as e:
         raise ImportError(f"Failed to import module {module}") from e
+    return module_name
+
+
+def generator_context_errors(module: str, context: Optional[Mapping] = None, raise_exception=True) -> str:
+    """Load a generator from a module and validate its context if provided.
+
+    Return an empty string if no errors.
+    Otherwise, return a string with the validation error or raise an exception if `raise_exception` is True.
+
+    Args:
+        module (str): module that exports a generator
+        context (Optional[Mapping]): the context for the generator
+        raise_exception (bool): if True, raise an exception if the context is not valid
+
+    Returns:
+        str: error message. Empty string if context is valid
+
+    Raises:
+        GeneratorContextError: if `raise_exception` is True and the context is not valid or the generator could not be imported
+    """
+    module_name = re.sub(r"\.py[co]?$", "", os.path.basename(module))  # Extract module name from path
+    if context is None:
+        return ""
+    # Load the generator to retrieve validation info
+    try:
+        module_name = load_bare_generator(module)
+    except ImportError as e:
+        if raise_exception:
+            raise GeneratorContextError("Failed to validate because unable to import the generator {module}") from e
+        return f"Could not import the generator to validate the context: {str(e)}"
+    # Validate the context
+    try:
+        GeneratorContext(context).validate(_loaded_generators[module_name].CONTEXT_VALIDATION)
+    except GeneratorContextError as e:
+        if raise_exception:
+            raise e
+        return str(e)
+    return ""
+
+
+def load_generator(module: str, context: Optional[Mapping] = None) -> Generator:
+    """Load a generator from a module and optionally associate it with a context.
+
+    Args:
+        module (str): module that exports a generator
+
+    Raises:
+        ImportError: when a `Generator` object cannot be imported from `module` (via `load_bare_generator`)
+        GeneratorError: when the setup or contextualization of a `Generator` object fail
+
+    Returns:
+        Generator: contextualized generator object. This is a generator instance based on the context.
+    """
+
+    module_name = load_bare_generator(module)
 
     try:
         instance_id = hash_nc(f"{module_name}{str(context)}", 8)

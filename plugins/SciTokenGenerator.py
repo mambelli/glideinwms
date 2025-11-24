@@ -30,20 +30,21 @@ class SciTokenGenerator(CredentialGenerator):
         - tkn_dir: Directory to store the generated tokens (default: /var/lib/gwms-frontend/tokens.d)
     """
 
+    CONTEXT_VALIDATION = {
+        "key_file": (str,),
+        "key_id": (str, None),
+        "issuer": (str,),
+        "scope": (str,),
+        "key_pass": (str, ""),
+        "algorithm": (str, "RS256"),
+        "wlcg_ver": (str, "1.0"),
+        "tkn_lifetime": (int, 7200),
+        "tkn_dir": (str, "/var/lib/gwms-frontend/tokens.d"),
+    }
+
     def _setup(self):
-        self.context.validate(
-            {
-                "key_file": (str,),
-                "key_id": (str, None),
-                "issuer": (str,),
-                "scope": (str,),
-                "key_pass": (str, ""),
-                "algorithm": (str, "RS256"),
-                "wlcg_ver": (str, "1.0"),
-                "tkn_lifetime": (int, 7200),
-                "tkn_dir": (str, "/var/lib/gwms-frontend/tokens.d"),
-            }
-        )
+        self.context.validate(self.CONTEXT_VALIDATION)
+
         self.context["type"] = "scitoken"
 
         self.key_pass = self.context["key_pass"].encode() or None

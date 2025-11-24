@@ -281,6 +281,9 @@ class Credential(ABC, Generic[T]):
     def decode(string: Union[str, bytes]) -> T:
         """Decode the given string to provide the credential.
 
+        For dynamic credentials, this is providing a contextualized generator,
+        given both the generator module and the context.
+
         Args:
             string (bytes): The string to decode.
 
